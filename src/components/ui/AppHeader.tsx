@@ -1,11 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { Cloud, Mic2, UserRound } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Cloud, LoaderCircle, LogOut, Mic2, UserRound } from "lucide-react";
+import { signOut } from "@/lib/auth-client";
 import { useAuthStore } from "@/store/authStore";
+import { useToastStore } from "@/store/toastStore";
 
 export function AppHeader({ current }: { current: "shift" | "sync" | "review" }) {
+  const router = useRouter();
   const worker = useAuthStore((state) => state.worker);
+  const clearLocalAuth = useAuthStore((state) => state.logout);
+  const showToast = useToastStore((state) => state.show);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setIsSigningOut(true);
+    try {
+      const result = await signOut();
+      if (result.error) throw new Error(result.error.message);
+      clearLocalAuth();
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      showToast("Could not log out. Check your connection and try again.");
+      setIsSigningOut(false);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-[#d7ded4]/90 bg-[#f7f3e9]/95 backdrop-blur-sm">
@@ -39,9 +61,21 @@ export function AppHeader({ current }: { current: "shift" | "sync" | "review" })
           </Link>
         </nav>
 
-        <div className="hidden min-w-0 items-center gap-2 text-sm font-semibold text-[#526762] md:flex">
-          <UserRound aria-hidden="true" className="size-4" />
-          <span className="max-w-36 truncate">{worker?.name ?? "Field worker"}</span>
+        <div className="flex min-w-0 items-center gap-1 text-sm font-semibold text-[#526762]">
+          <div className="hidden min-w-0 items-center gap-2 lg:flex">
+            <UserRound aria-hidden="true" className="size-4" />
+            <span className="max-w-28 truncate">{worker?.name ?? "Field worker"}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleSignOut()}
+            disabled={isSigningOut}
+            aria-label={isSigningOut ? "Logging out" : "Log out"}
+            title="Log out"
+            className="ml-1 grid size-11 shrink-0 place-items-center rounded-xl text-[#526762] transition hover:bg-[#ebe8de] hover:text-[#173b37] disabled:cursor-wait disabled:text-[#9ca7a3]"
+          >
+            {isSigningOut ? <LoaderCircle aria-hidden="true" className="size-5 animate-spin" /> : <LogOut aria-hidden="true" className="size-5" />}
+          </button>
         </div>
       </div>
     </header>

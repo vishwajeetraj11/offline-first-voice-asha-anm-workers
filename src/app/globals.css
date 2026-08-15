@@ -65,6 +65,11 @@ textarea {
   color: var(--brand-strong);
 }
 
+/* Fast Refresh can briefly retain an old root while mounting the next one. */
+[data-connectivity-banner] ~ [data-connectivity-banner] {
+  display: none;
+}
+
 .font-display {
   font-family: var(--font-display);
 }

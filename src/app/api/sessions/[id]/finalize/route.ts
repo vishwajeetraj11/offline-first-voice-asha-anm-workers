@@ -18,7 +18,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const markerGuide = markers.length > 0
       ? `Explicit household markers (use these as boundary hints):\n${markers.map((marker) => `Marker ${marker.sequenceNumber} at ${marker.offsetMs}ms`).join("\n")}\n\n`
       : "No explicit household markers were captured; infer boundaries conservatively.\n\n";
-    const visits = await parseVisits(`${markerGuide}Transcript:\n${transcript}`);
+    // A recording can contain only silence and still be uploaded correctly.
+    // Complete it with no visit rows instead of asking the parser to infer
+    // content from an empty transcript.
+    const visits = transcript.trim()
+      ? await parseVisits(`${markerGuide}Transcript:\n${transcript}`)
+      : [];
     const insert = appDb.prepare("INSERT INTO visit_record (id, session_id, household_name, visit_category, symptoms_json, action_taken, next_visit_at, confidence, status, source_excerpt, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     const transaction = appDb.transaction(() => {
       appDb.prepare("DELETE FROM visit_record WHERE session_id = ?").run(id);

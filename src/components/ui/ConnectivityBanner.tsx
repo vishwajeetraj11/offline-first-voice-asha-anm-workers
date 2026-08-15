@@ -23,7 +23,7 @@ export function ConnectivityBanner() {
 
   if (!isOnline) {
     return (
-      <div role="status" className="w-full bg-[#f4dba9] px-4 py-2.5 text-center text-sm font-semibold text-[#653f0e]">
+      <div data-connectivity-banner role="status" className="w-full bg-[#f4dba9] px-4 py-2.5 text-center text-sm font-semibold text-[#653f0e]">
         You&apos;re offline · recordings stay safe on this device
       </div>
     );
@@ -31,7 +31,7 @@ export function ConnectivityBanner() {
 
   if (justReconnected) {
     return (
-      <div role="status" className="w-full bg-[#dceee7] px-4 py-2.5 text-center text-sm font-semibold text-[#0c5146]">
+      <div data-connectivity-banner role="status" className="w-full bg-[#dceee7] px-4 py-2.5 text-center text-sm font-semibold text-[#0c5146]">
         Back online · sending saved recordings…
       </div>
     );

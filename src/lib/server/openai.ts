@@ -34,7 +34,9 @@ export function getStoredTranscript(sessionId: string): string {
   const chunks = appDb
     .prepare("SELECT transcript_text FROM app_audio_chunk WHERE session_id = ? ORDER BY chunk_index")
     .all(sessionId) as Array<{ transcript_text: string | null }>;
-  if (chunks.length === 0 || chunks.some((chunk) => !chunk.transcript_text)) {
+  // An empty string is a valid transcription result for silence. Only NULL
+  // means the chunk has not completed transcription.
+  if (chunks.length === 0 || chunks.some((chunk) => chunk.transcript_text === null)) {
     throw new Error("Not all audio chunks have been transcribed");
   }
   return chunks.map((chunk) => chunk.transcript_text as string).join("\n");

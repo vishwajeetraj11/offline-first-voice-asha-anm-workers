@@ -11,6 +11,7 @@ import {
 import { uploadSession } from "@/lib/sync/uploader";
 import { getBackoffDelayMs } from "@/lib/constants";
 import { AuthExpiredError } from "@/lib/api/client";
+import { canReachAppServer } from "@/lib/connectivity/network";
 import type { UploadQueueJob } from "@/types/domain";
 
 let isProcessing = false;
@@ -21,10 +22,10 @@ let isProcessing = false;
 // Uploading -> Synced UI simple to reason about.
 export async function processQueue(): Promise<void> {
   if (isProcessing) return;
-  if (typeof navigator !== "undefined" && !navigator.onLine) return;
-
   isProcessing = true;
   try {
+    if (!(await canReachAppServer())) return;
+
     const jobs = await getDueJobs();
     for (const job of jobs) {
       await processJob(job);
