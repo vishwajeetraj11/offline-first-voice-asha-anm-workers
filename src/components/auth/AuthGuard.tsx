@@ -2,19 +2,20 @@
 
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
 import { useAuthStore } from "@/store/authStore";
-import { useAuthHydration } from "@/lib/auth/useAuthHydration";
 
 export function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const token = useAuthStore((state) => state.token);
-  const hasHydrated = useAuthHydration();
+  const { data: session, isPending } = useSession();
+  const setWorker = useAuthStore((state) => state.setWorker);
 
   useEffect(() => {
-    if (hasHydrated && !token) router.replace("/login");
-  }, [hasHydrated, token, router]);
+    if (!isPending && !session) router.replace("/login");
+    if (session?.user) setWorker({ id: session.user.id, name: session.user.name, phoneNumber: "", facilityId: "" });
+  }, [isPending, session, router, setWorker]);
 
-  if (!hasHydrated || !token) return null;
+  if (isPending || !session) return null;
 
   return <>{children}</>;
 }

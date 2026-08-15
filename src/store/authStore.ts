@@ -7,6 +7,7 @@ interface AuthState {
   worker: Worker | null;
   authExpired: boolean;
   login: (token: string, worker: Worker) => void;
+  setWorker: (worker: Worker) => void;
   logout: () => void;
   markAuthExpired: () => void;
 }
@@ -32,6 +33,7 @@ export const useAuthStore = create<AuthState>()(
       worker: null,
       authExpired: false,
       login: (token, worker) => set({ token, worker, authExpired: false }),
+      setWorker: (worker) => set({ worker, authExpired: false }),
       logout: () => set({ token: null, worker: null, authExpired: false }),
       markAuthExpired: () => set({ authExpired: true }),
     }),

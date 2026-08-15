@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
-import { LoginForm } from "@/components/auth/LoginForm";
+import { SignupForm } from "@/components/auth/SignupForm";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
 
@@ -19,16 +19,12 @@ export default function LoginPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-12">
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold text-neutral-900">Voice Register</h1>
-        <p className="text-sm text-neutral-500">
-          Log in to start recording your shift.
-        </p>
+        <h1 className="text-2xl font-bold text-neutral-900">Create your account</h1>
+        <p className="text-sm text-neutral-500">Set up Voice Register for your field visits.</p>
       </div>
       <div className="w-full max-w-sm">
-        <LoginForm />
-        <p className="mt-5 text-center text-sm text-neutral-500">
-          New here? <Link className="font-semibold text-teal-700" href="/signup">Create an account</Link>
-        </p>
+        <SignupForm />
+        <p className="mt-5 text-center text-sm text-neutral-500">Already registered? <Link className="font-semibold text-teal-700" href="/login">Log in</Link></p>
       </div>
     </main>
   );

@@ -2,18 +2,15 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/authStore";
-import { useAuthHydration } from "@/lib/auth/useAuthHydration";
+import { useSession } from "@/lib/auth-client";
 
 export default function RootPage() {
   const router = useRouter();
-  const token = useAuthStore((state) => state.token);
-  const hasHydrated = useAuthHydration();
+  const { data: session, isPending } = useSession();
 
   useEffect(() => {
-    if (!hasHydrated) return;
-    router.replace(token ? "/shift" : "/login");
-  }, [hasHydrated, token, router]);
+    if (!isPending) router.replace(session ? "/shift" : "/login");
+  }, [isPending, session, router]);
 
   return null;
 }
