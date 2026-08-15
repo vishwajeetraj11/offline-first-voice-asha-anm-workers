@@ -1,9 +1,11 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
+import Link from "next/link";
 import { db } from "@/lib/db/schema";
 import { SyncStatusBadge } from "@/components/sync/SyncStatusBadge";
 import { RetryButton } from "@/components/sync/RetryButton";
+import { DeleteFailedButton } from "@/components/sync/DeleteFailedButton";
 import { formatDateTime, formatDuration, formatRelativeTime } from "@/lib/format";
 
 export function SyncQueueList() {
@@ -46,6 +48,14 @@ export function SyncQueueList() {
             <span className="text-sm text-neutral-500">
               Duration: {formatDuration(session.totalDurationMs)}
             </span>
+            {session.syncStatus === "synced" && (
+              <Link
+                href={`/review/${session.id}`}
+                className="text-sm font-semibold text-teal-700 underline-offset-2 hover:underline"
+              >
+                View parsed register
+              </Link>
+            )}
             {session.syncStatus === "failed" && (
               <div className="mt-1 flex items-center justify-between gap-2">
                 <span className="text-xs text-neutral-500">
@@ -55,7 +65,10 @@ export function SyncQueueList() {
                       ? `Next auto-retry ${formatRelativeTime(job.nextRetryAt)}`
                       : "Waiting to retry"}
                 </span>
-                <RetryButton sessionId={session.id} />
+                <div className="flex items-center gap-2">
+                  <RetryButton sessionId={session.id} />
+                  <DeleteFailedButton sessionId={session.id} />
+                </div>
               </div>
             )}
           </li>

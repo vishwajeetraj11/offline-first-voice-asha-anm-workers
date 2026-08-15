@@ -259,3 +259,24 @@ export async function getJobForSession(
 export async function getAllFailedJobs(): Promise<UploadQueueJob[]> {
   return db.uploadQueue.where("status").equals("failed").toArray();
 }
+
+export async function deleteFailedSession(sessionId: string): Promise<void> {
+  await db.transaction(
+    "rw",
+    db.sessions,
+    db.markers,
+    db.audioChunks,
+    db.uploadQueue,
+    async () => {
+      const session = await db.sessions.get(sessionId);
+      if (!session || session.syncStatus !== "failed") {
+        throw new Error("Only failed sessions can be deleted");
+      }
+
+      await db.markers.where("sessionId").equals(sessionId).delete();
+      await db.audioChunks.where("sessionId").equals(sessionId).delete();
+      await db.uploadQueue.where("sessionId").equals(sessionId).delete();
+      await db.sessions.delete(sessionId);
+    },
+  );
+}

@@ -27,6 +27,9 @@ export class ShiftRecorder {
   private wakeLock: WakeLockSentinel | null = null;
   private chunkIndex = 0;
   private chunksSinceCheckpoint = 0;
+  private rotationTimer: ReturnType<typeof setTimeout> | null = null;
+  private stopping = false;
+  private segmentStartOffsetMs = 0;
   // MediaRecorder's "stop" event fires right after the final "dataavailable"
   // event, but that final chunk's IndexedDB write is async and not awaited
   // by the browser — without tracking it, stop() could resolve and the
@@ -44,18 +47,7 @@ export class ShiftRecorder {
     });
 
     const mimeType = getSupportedMimeType();
-    this.mediaRecorder = new MediaRecorder(this.mediaStream, {
-      ...(mimeType ? { mimeType } : {}),
-      audioBitsPerSecond: 32_000,
-    });
-
-    this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
-      if (event.data.size === 0) return;
-      const writePromise = this.handleChunk(event.data);
-      this.pendingWrites.push(writePromise);
-    };
-
-    this.mediaRecorder.start(RECORDING_TIMESLICE_MS);
+    this.startSegment(mimeType);
 
     if ("wakeLock" in navigator) {
       try {
@@ -66,9 +58,26 @@ export class ShiftRecorder {
     }
   }
 
-  private async handleChunk(blob: Blob): Promise<void> {
-    const startOffsetMs =
-      this.chunkIndex * RECORDING_TIMESLICE_MS;
+  private startSegment(mimeType: string): void {
+    if (!this.mediaStream || this.stopping) return;
+
+    this.segmentStartOffsetMs = this.getElapsedMs();
+    this.mediaRecorder = new MediaRecorder(this.mediaStream, {
+      ...(mimeType ? { mimeType } : {}),
+      audioBitsPerSecond: 32_000,
+    });
+    this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
+      if (event.data.size === 0) return;
+      const writePromise = this.handleChunk(event.data, this.segmentStartOffsetMs);
+      this.pendingWrites.push(writePromise);
+    };
+    this.mediaRecorder.start();
+    this.rotationTimer = setTimeout(() => {
+      void this.rotateSegment(mimeType);
+    }, RECORDING_TIMESLICE_MS);
+  }
+
+  private async handleChunk(blob: Blob, startOffsetMs: number): Promise<void> {
 
     await addAudioChunk({
       sessionId: this.sessionId,
@@ -90,9 +99,31 @@ export class ShiftRecorder {
     }
   }
 
+  private async rotateSegment(mimeType: string): Promise<void> {
+    if (this.stopping || !this.mediaRecorder || this.mediaRecorder.state === "inactive") return;
+
+    const recorder = this.mediaRecorder;
+    await new Promise<void>((resolve) => {
+      recorder.addEventListener("stop", () => resolve(), { once: true });
+      recorder.stop();
+    });
+    await this.waitForPendingWrites();
+    if (!this.stopping) this.startSegment(mimeType);
+  }
+
+  private async waitForPendingWrites(): Promise<void> {
+    const writes = this.pendingWrites;
+    this.pendingWrites = [];
+    await Promise.all(writes);
+  }
+
   async stop(): Promise<void> {
+    this.stopping = true;
+    if (this.rotationTimer) clearTimeout(this.rotationTimer);
+
     const recorder = this.mediaRecorder;
     if (!recorder || recorder.state === "inactive") {
+      await this.waitForPendingWrites();
       await this.releaseResources();
       return;
     }
@@ -109,7 +140,7 @@ export class ShiftRecorder {
     // Flush any chunk writes still in flight (including the final one
     // triggered just before "stop") before the caller treats recording as
     // fully persisted.
-    await Promise.all(this.pendingWrites);
+    await this.waitForPendingWrites();
 
     await this.releaseResources();
   }
