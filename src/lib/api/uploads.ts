@@ -18,16 +18,12 @@ export async function uploadAudioChunkRemote(
   formData.append("capturedAt", chunk.capturedAt);
   formData.append("file", chunk.blob, `${chunk.id}.webm`);
 
-  const token = useAuthStore.getState().token;
-  const headers: HeadersInit = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
   const response = await fetch(
     `${API_BASE_URL}/sessions/${sessionId}/audio-chunks`,
-    { method: "POST", headers, body: formData }
+    { method: "POST", body: formData, credentials: "same-origin" }
   );
 
-  if (response.status === 401) {
+  if (response.status === 401 || response.status === 403) {
     useAuthStore.getState().markAuthExpired();
     const errorBody = await safeParseError(response);
     throw new AuthExpiredError(errorBody?.message ?? "Session expired");

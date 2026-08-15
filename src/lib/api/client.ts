@@ -29,23 +29,19 @@ interface RequestOptions {
 
 async function request<T>(
   path: string,
-  { method = "GET", body, isFormData = false, authenticated = true }: RequestOptions = {}
+  { method = "GET", body, isFormData = false }: RequestOptions = {}
 ): Promise<T> {
   const headers: HeadersInit = {};
   if (!isFormData) headers["Content-Type"] = "application/json";
-
-  if (authenticated) {
-    const token = useAuthStore.getState().token;
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-  }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers,
     body: isFormData ? (body as FormData) : body ? JSON.stringify(body) : undefined,
+    credentials: "same-origin",
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 || response.status === 403) {
     useAuthStore.getState().markAuthExpired();
     const errorBody = await safeParseError(response);
     throw new AuthExpiredError(errorBody?.message ?? "Session expired");

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "@/lib/constants";
+import { useAuthStore } from "@/store/authStore";
 
 export const CONNECTIVITY_CHANGE_EVENT = "asha:connectivity-change";
 
@@ -11,13 +12,17 @@ export async function canReachAppServer(timeoutMs = 4_000): Promise<boolean> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
-    await fetch(`${API_BASE_URL}/auth/get-session`, {
+    const response = await fetch(`${API_BASE_URL}/auth/get-session`, {
       method: "GET",
       cache: "no-store",
       credentials: "same-origin",
       signal: controller.signal,
     });
-    return true;
+    if (response.status === 401 || response.status === 403) {
+      useAuthStore.getState().markAuthExpired();
+      return true;
+    }
+    return response.ok;
   } catch {
     return false;
   } finally {
