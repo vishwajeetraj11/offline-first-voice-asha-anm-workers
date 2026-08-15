@@ -17,6 +17,18 @@ const withPWA = withPWAInit({
     // only static assets/pages get precached.
     runtimeCaching: [
       {
+        // Keep the last successfully loaded app shell available for a full
+        // browser refresh while offline. The client-side auth guard then
+        // uses the persisted local worker state instead of redirecting.
+        urlPattern: /^https?:\/\/[^/]+\/(?:|shift|sync|review\/.*)$/i,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "app-pages",
+          networkTimeoutSeconds: 3,
+          cacheableResponse: { statuses: [0, 200] },
+        },
+      },
+      {
         urlPattern: /^https?.*\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
         handler: "CacheFirst",
         options: {
