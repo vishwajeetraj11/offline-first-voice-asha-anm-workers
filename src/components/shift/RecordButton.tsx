@@ -84,7 +84,7 @@ export function RecordButton({
   return (
     <div className="flex w-full flex-col gap-2">
       {isConfirmingStop && (
-        <div className="mb-2 rounded-2xl border border-[#e1b0aa] bg-[#fff3f0] p-4 text-[#6e2d27]">
+        <div className="mb-2 rounded-2xl border border-[#a7d4c7] bg-[#e8f3ee] p-4 text-[#145447]">
           <p className="font-display text-lg font-bold">Finish this shift?</p>
           <p className="mt-1 text-sm font-semibold leading-5">The recording will stop and move to your saved records.</p>
           <button type="button" onClick={() => setIsConfirmingStop(false)} className="mt-3 min-h-11 text-sm font-semibold underline underline-offset-4">
@@ -102,7 +102,7 @@ export function RecordButton({
         </div>
       )}
       <Button
-        variant={isRecording ? "danger" : "primary"}
+        variant="primary"
         onClick={handleClick}
         disabled={isBusy}
         className="inline-flex items-center justify-center gap-3"
