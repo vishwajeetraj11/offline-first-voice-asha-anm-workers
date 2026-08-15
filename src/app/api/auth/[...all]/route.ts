@@ -3,14 +3,19 @@ import { getMigrations } from "better-auth/db/migration";
 import { auth } from "@/lib/auth";
 
 const handler = toNextJsHandler(auth);
-const databaseReady = getMigrations(auth.options).then(({ runMigrations }) => runMigrations());
+let databaseReady: Promise<void> | undefined;
+
+function ensureAuthDatabase(): Promise<void> {
+  databaseReady ??= getMigrations(auth.options).then(({ runMigrations }) => runMigrations());
+  return databaseReady;
+}
 
 export async function GET(request: Request) {
-  await databaseReady;
+  await ensureAuthDatabase();
   return handler.GET(request);
 }
 
 export async function POST(request: Request) {
-  await databaseReady;
+  await ensureAuthDatabase();
   return handler.POST(request);
 }

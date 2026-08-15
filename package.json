@@ -11,20 +11,20 @@
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "better-auth": "^1.6.29",
-    "better-sqlite3": "^12.11.1",
     "dexie": "^4.4.5",
     "dexie-react-hooks": "^4.4.0",
     "lucide-react": "^1.31.0",
     "next": "16.3.1",
     "openai": "^7.4.0",
+    "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
+    "@types/pg": "^8.21.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

@@ -1,12 +1,9 @@
 import { betterAuth } from "better-auth";
-import Database from "better-sqlite3";
-import { mkdirSync } from "node:fs";
-
-mkdirSync("./data", { recursive: true });
+import { postgres } from "@/lib/server/postgres";
 
 export const auth = betterAuth({
-  database: new Database("./data/auth.db"),
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  database: postgres,
+  baseURL: process.env.BETTER_AUTH_URL?.trim() || "http://localhost:3000",
   secret:
     process.env.BETTER_AUTH_SECRET ??
     "local-development-secret-change-before-deploying-1234567890",

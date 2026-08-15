@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { appDb, nowIso } from "@/lib/server/app-db";
+import { appQuery, nowIso } from "@/lib/server/app-db";
 import { requireAuth } from "@/lib/server/auth-session";
 
 export async function POST(request: Request) {
@@ -10,9 +10,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "invalid_request", message: "Invalid session payload" }, { status: 400 });
     }
     const now = nowIso();
-    appDb.prepare(`INSERT OR IGNORE INTO app_session (id, user_id, device_id, started_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`)
-      .run(body.id, session.user.id, body.deviceId, body.startedAt, now, now);
-    const row = appDb.prepare("SELECT id, status, created_at as createdAt FROM app_session WHERE id = ?").get(body.id);
+    await appQuery(
+      `INSERT INTO app_session (id, user_id, device_id, started_at, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (id) DO NOTHING`,
+      [body.id, session.user.id, body.deviceId, body.startedAt, now, now],
+    );
+    const { rows: [row] } = await appQuery<{ id: string; status: string; createdAt: string }>(
+      `SELECT id, status, created_at AS "createdAt" FROM app_session WHERE id = $1`,
+      [body.id],
+    );
     return NextResponse.json(row, { status: 201 });
   } catch (error) {
     if (error instanceof Response) return error;

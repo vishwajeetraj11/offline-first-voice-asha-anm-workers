@@ -1,5 +1,5 @@
 import OpenAI, { toFile } from "openai";
-import { appDb } from "@/lib/server/app-db";
+import { appQuery } from "@/lib/server/app-db";
 
 function getOpenAI(): OpenAI {
   const apiKey = process.env.OPEN_AI_API?.trim();
@@ -30,10 +30,11 @@ export async function transcribeAudioBuffer(
   return result.text;
 }
 
-export function getStoredTranscript(sessionId: string): string {
-  const chunks = appDb
-    .prepare("SELECT transcript_text FROM app_audio_chunk WHERE session_id = ? ORDER BY chunk_index")
-    .all(sessionId) as Array<{ transcript_text: string | null }>;
+export async function getStoredTranscript(sessionId: string): Promise<string> {
+  const { rows: chunks } = await appQuery<{ transcript_text: string | null }>(
+    "SELECT transcript_text FROM app_audio_chunk WHERE session_id = $1 ORDER BY chunk_index",
+    [sessionId],
+  );
   // An empty string is a valid transcription result for silence. Only NULL
   // means the chunk has not completed transcription.
   if (chunks.length === 0 || chunks.some((chunk) => chunk.transcript_text === null)) {
