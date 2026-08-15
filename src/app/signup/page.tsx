@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { SignupForm } from "@/components/auth/SignupForm";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -17,15 +18,9 @@ export default function SignupPage() {
   if (isPending || session) return null;
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-12">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold text-neutral-900">Create your account</h1>
-        <p className="text-sm text-neutral-500">Set up Voice Register for your field visits.</p>
-      </div>
-      <div className="w-full max-w-sm">
-        <SignupForm />
-        <p className="mt-5 text-center text-sm text-neutral-500">Already registered? <Link className="font-semibold text-teal-700" href="/login">Log in</Link></p>
-      </div>
-    </main>
+    <AuthShell eyebrow="First-time setup" title="Create your secure register." description="Set up Awaaz once, then keep recording even when the network is unreliable.">
+      <SignupForm />
+      <p className="mt-6 text-sm font-semibold text-[#60736e]">Already registered? <Link className="font-semibold text-[#176b5b] underline decoration-2 underline-offset-4" href="/login">Log in</Link></p>
+    </AuthShell>
   );
 }

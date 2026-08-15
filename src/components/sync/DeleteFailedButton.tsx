@@ -25,7 +25,7 @@ export function DeleteFailedButton({ sessionId }: { sessionId: string }) {
       disabled={isDeleting}
       aria-label="Delete failed recording"
       title="Delete failed recording"
-      className="inline-flex items-center gap-2 rounded-lg border-2 border-red-700 px-4 py-2 text-sm font-semibold text-red-700 active:bg-red-50 disabled:border-neutral-300 disabled:text-neutral-400"
+      className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-[#9a3b33] underline-offset-4 hover:underline disabled:text-[#a99a97]"
     >
       {isDeleting ? (
         <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />

@@ -51,13 +51,14 @@ const visitSchema = {
         additionalProperties: false,
         properties: {
           householdName: { anyOf: [{ type: "string" }, { type: "null" }] },
+          visitCategory: { type: "string", enum: ["HBNC", "HBYC", "ANC", "PNC", "Immunization", "General"] },
           symptoms: { type: "array", items: { type: "string" } },
           actionTaken: { anyOf: [{ type: "string" }, { type: "null" }] },
           nextVisitAt: { anyOf: [{ type: "string" }, { type: "null" }] },
           confidence: { type: "number" },
           sourceExcerpt: { type: "string" },
         },
-        required: ["householdName", "symptoms", "actionTaken", "nextVisitAt", "confidence", "sourceExcerpt"],
+        required: ["householdName", "visitCategory", "symptoms", "actionTaken", "nextVisitAt", "confidence", "sourceExcerpt"],
       },
     },
   },
@@ -66,6 +67,7 @@ const visitSchema = {
 
 export type ParsedVisit = {
   householdName: string | null;
+  visitCategory: "HBNC" | "HBYC" | "ANC" | "PNC" | "Immunization" | "General";
   symptoms: string[];
   actionTaken: string | null;
   nextVisitAt: string | null;
@@ -80,7 +82,7 @@ export async function parseVisits(transcript: string): Promise<ParsedVisit[]> {
     input: [
       {
         role: "system",
-        content: "You convert an ASHA/ANM field-visit transcript into register-ready household rows. Split rows only at clear household boundaries or explicit household markers. Treat marker hints as boundaries, not as household facts. Never invent missing facts: use null or an empty array. Confidence must be 0 to 1 and reflect evidence in the transcript. Use needs review downstream for confidence below 0.75 or missing household name/action.",
+        content: "You convert an ASHA/ANM field-visit transcript into register-ready household rows. Split rows only at clear household boundaries or explicit household markers. Assign exactly one visitCategory: HBNC for newborn/mother visits, HBYC for young-child follow-up, ANC for antenatal care, PNC for postnatal care, Immunization for vaccination follow-up, or General for other/unclear household health visits. Never infer a category from weak evidence; use General when unclear. Treat marker hints as boundaries, not as household facts. Never invent missing facts: use null or an empty array. Confidence must be 0 to 1 and reflect evidence in the transcript. Use needs review downstream for confidence below 0.75 or missing household name/action.",
       },
       { role: "user", content: transcript },
     ],

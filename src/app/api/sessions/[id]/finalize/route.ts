@@ -19,12 +19,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       ? `Explicit household markers (use these as boundary hints):\n${markers.map((marker) => `Marker ${marker.sequenceNumber} at ${marker.offsetMs}ms`).join("\n")}\n\n`
       : "No explicit household markers were captured; infer boundaries conservatively.\n\n";
     const visits = await parseVisits(`${markerGuide}Transcript:\n${transcript}`);
-    const insert = appDb.prepare("INSERT INTO visit_record (id, session_id, household_name, symptoms_json, action_taken, next_visit_at, confidence, status, source_excerpt, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    const insert = appDb.prepare("INSERT INTO visit_record (id, session_id, household_name, visit_category, symptoms_json, action_taken, next_visit_at, confidence, status, source_excerpt, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     const transaction = appDb.transaction(() => {
       appDb.prepare("DELETE FROM visit_record WHERE session_id = ?").run(id);
       for (const visit of visits) {
         const status = visit.confidence < 0.75 || !visit.householdName || !visit.actionTaken ? "needs_review" : "ready";
-        insert.run(crypto.randomUUID(), id, visit.householdName, JSON.stringify(visit.symptoms), visit.actionTaken, visit.nextVisitAt, visit.confidence, status, visit.sourceExcerpt, nowIso());
+        insert.run(crypto.randomUUID(), id, visit.householdName, visit.visitCategory, JSON.stringify(visit.symptoms), visit.actionTaken, visit.nextVisitAt, visit.confidence, status, visit.sourceExcerpt, nowIso());
       }
     });
     transaction();

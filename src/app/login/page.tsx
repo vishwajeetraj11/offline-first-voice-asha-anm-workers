@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,19 +18,11 @@ export default function LoginPage() {
   if (isPending || session) return null;
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-12">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold text-neutral-900">Voice Register</h1>
-        <p className="text-sm text-neutral-500">
-          Log in to start recording your shift.
-        </p>
-      </div>
-      <div className="w-full max-w-sm">
+    <AuthShell eyebrow="Welcome back" title="Continue your field work." description="Log in to record today’s visits or check saved registers.">
         <LoginForm />
-        <p className="mt-5 text-center text-sm text-neutral-500">
-          New here? <Link className="font-semibold text-teal-700" href="/signup">Create an account</Link>
+        <p className="mt-6 text-sm font-semibold text-[#60736e]">
+          New here? <Link className="font-semibold text-[#176b5b] underline decoration-2 underline-offset-4" href="/signup">Create an account</Link>
         </p>
-      </div>
-    </main>
+    </AuthShell>
   );
 }

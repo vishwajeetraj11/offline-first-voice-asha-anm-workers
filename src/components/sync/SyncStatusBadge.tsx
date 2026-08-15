@@ -2,20 +2,20 @@ import type { SyncStatus } from "@/types/domain";
 
 const STATUS_STYLES: Record<SyncStatus, { label: string; className: string }> = {
   pending: {
-    label: "Waiting to upload",
-    className: "bg-neutral-200 text-neutral-700",
+    label: "Saved here",
+    className: "bg-[#ebe8de] text-[#526762]",
   },
   uploading: {
     label: "Uploading",
-    className: "bg-sky-100 text-sky-800",
+    className: "bg-[#e8edf2] text-[#38556b]",
   },
   synced: {
-    label: "Uploaded",
-    className: "bg-emerald-100 text-emerald-800",
+    label: "Ready",
+    className: "bg-[#dceee7] text-[#0c5146]",
   },
   failed: {
-    label: "Failed",
-    className: "bg-red-100 text-red-800",
+    label: "Needs help",
+    className: "bg-[#f4dba9] text-[#7c470c]",
   },
 };
 
@@ -23,10 +23,10 @@ export function SyncStatusBadge({ status }: { status: SyncStatus }) {
   const { label, className } = STATUS_STYLES[status];
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${className}`}
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold ${className}`}
     >
       {status === "uploading" && (
-        <span className="h-2 w-2 animate-pulse rounded-full bg-sky-600" />
+        <span className="h-2 w-2 animate-pulse rounded-full bg-[#466b85]" />
       )}
       {label}
     </span>

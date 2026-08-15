@@ -43,6 +43,7 @@ appDb.exec(`
     id TEXT PRIMARY KEY,
     session_id TEXT NOT NULL,
     household_name TEXT,
+    visit_category TEXT NOT NULL DEFAULT 'General',
     symptoms_json TEXT NOT NULL,
     action_taken TEXT,
     next_visit_at TEXT,
@@ -55,6 +56,12 @@ appDb.exec(`
 
 try {
   appDb.exec("ALTER TABLE app_audio_chunk ADD COLUMN transcript_text TEXT");
+} catch {
+  // Column already exists on an initialized local database.
+}
+
+try {
+  appDb.exec("ALTER TABLE visit_record ADD COLUMN visit_category TEXT NOT NULL DEFAULT 'General'");
 } catch {
   // Column already exists on an initialized local database.
 }
