@@ -11,8 +11,8 @@ export async function canReachAppServer(timeoutMs = 4_000): Promise<boolean> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
-    await fetch(`${API_BASE_URL}/auth/get-session?connectivity=${Date.now()}`, {
-      method: "HEAD",
+    await fetch(`${API_BASE_URL}/auth/get-session`, {
+      method: "GET",
       cache: "no-store",
       credentials: "same-origin",
       signal: controller.signal,
