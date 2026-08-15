@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { useAuthStore } from "@/store/authStore";
 import { useAuthHydration } from "@/lib/auth/useAuthHydration";
+import { clearAllLocalData } from "@/lib/db/queries";
 
 export function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -16,9 +17,24 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const hasOfflineAuth = hasHydrated && Boolean(worker) && !authExpired;
 
   useEffect(() => {
+    if (session?.user) {
+      const incomingWorker = {
+        id: session.user.id,
+        name: session.user.name,
+        phoneNumber: "",
+        facilityId: "",
+      };
+
+      if (!worker || worker.id !== incomingWorker.id) {
+        if (worker) {
+          void clearAllLocalData();
+        }
+        setWorker(incomingWorker);
+      }
+    }
+
     if (!isPending && !session && !hasOfflineAuth) router.replace("/login");
-    if (session?.user) setWorker({ id: session.user.id, name: session.user.name, phoneNumber: "", facilityId: "" });
-  }, [hasOfflineAuth, isPending, session, router, setWorker]);
+  }, [hasOfflineAuth, isPending, session, router, setWorker, worker]);
 
   if (!hasOfflineAuth && (isPending || !session)) return null;
 

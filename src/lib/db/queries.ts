@@ -304,3 +304,21 @@ export async function discardSessionLocally(sessionId: string): Promise<void> {
     await db.sessions.delete(sessionId);
   });
 }
+
+export async function clearAllLocalData(): Promise<void> {
+  await db.transaction(
+    "rw",
+    db.sessions,
+    db.markers,
+    db.audioChunks,
+    db.uploadQueue,
+    async () => {
+      await Promise.all([
+        db.sessions.clear(),
+        db.markers.clear(),
+        db.audioChunks.clear(),
+        db.uploadQueue.clear(),
+      ]);
+    }
+  );
+}

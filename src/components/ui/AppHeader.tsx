@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Cloud, LoaderCircle, LogOut, Mic2, UserRound } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
+import { clearAllLocalData } from "@/lib/db/queries";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 
@@ -21,6 +22,7 @@ export function AppHeader({ current }: { current: "shift" | "sync" | "review" })
       const result = await signOut();
       if (result.error) throw new Error(result.error.message);
       clearLocalAuth();
+      await clearAllLocalData();
       router.replace("/login");
       router.refresh();
     } catch {
