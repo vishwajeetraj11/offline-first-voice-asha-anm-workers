@@ -280,3 +280,12 @@ export async function deleteFailedSession(sessionId: string): Promise<void> {
     },
   );
 }
+
+export async function discardSessionLocally(sessionId: string): Promise<void> {
+  await db.transaction("rw", db.sessions, db.markers, db.audioChunks, db.uploadQueue, async () => {
+    await db.markers.where("sessionId").equals(sessionId).delete();
+    await db.audioChunks.where("sessionId").equals(sessionId).delete();
+    await db.uploadQueue.where("sessionId").equals(sessionId).delete();
+    await db.sessions.delete(sessionId);
+  });
+}

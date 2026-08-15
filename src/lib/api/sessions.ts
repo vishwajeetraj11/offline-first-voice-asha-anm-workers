@@ -52,3 +52,7 @@ export function getSessionStatusRemote(
 ): Promise<SessionStatusResponse> {
   return apiClient.get<SessionStatusResponse>(`/sessions/${sessionId}/status`);
 }
+
+export function deleteSessionRemote(sessionId: string): Promise<void> {
+  return apiClient.delete<void>(`/sessions/${sessionId}`);
+}

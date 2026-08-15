@@ -9,7 +9,7 @@ import { MarkerButton } from "@/components/shift/MarkerButton";
 import { ShiftSummary } from "@/components/shift/ShiftSummary";
 
 export default function ShiftPage() {
-  const { recordingState, elapsedMs, markerCount, start, stop, markHousehold } =
+  const { recordingState, elapsedMs, markerCount, start, stop, cancel, restart, hasCompletedRecording, markHousehold } =
     useShiftRecording();
   const isRecording = recordingState === "recording";
 
@@ -58,7 +58,14 @@ export default function ShiftPage() {
               </p>
             </div>
             <MarkerButton recordingState={recordingState} onMark={markHousehold} />
-            <RecordButton recordingState={recordingState} onStart={start} onStop={stop} />
+            <RecordButton
+              recordingState={recordingState}
+              onStart={start}
+              onStop={stop}
+              onCancel={cancel}
+              onRestart={restart}
+              hasCompletedRecording={hasCompletedRecording}
+            />
           </aside>
         </div>
       </main>

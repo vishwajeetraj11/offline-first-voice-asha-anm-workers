@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useRecordingStore } from "@/store/recordingStore";
 import { useToastStore } from "@/store/toastStore";
@@ -8,12 +8,13 @@ import { ShiftRecorder } from "@/lib/recording/recorder";
 import { markHouseholdBoundary } from "@/lib/recording/markers";
 import {
   createSession,
+  discardSessionLocally,
   endSession,
   enqueueUpload,
   findActiveOrphanSessions,
   markSessionInterrupted,
 } from "@/lib/db/queries";
-import { createSessionRemote } from "@/lib/api/sessions";
+import { createSessionRemote, deleteSessionRemote } from "@/lib/api/sessions";
 import { processQueue } from "@/lib/sync/engine";
 import { getOrCreateDeviceId } from "@/lib/deviceId";
 
@@ -24,6 +25,7 @@ function formatMinutes(ms: number): string {
 
 export function useShiftRecording() {
   const recorderRef = useRef<ShiftRecorder | null>(null);
+  const [completedSessionId, setCompletedSessionId] = useState<string | null>(null);
   const worker = useAuthStore((state) => state.worker);
   const showToast = useToastStore((state) => state.show);
 
@@ -74,6 +76,7 @@ export function useShiftRecording() {
     if (!worker || recorderRef.current) return;
 
     const sessionId = crypto.randomUUID();
+    setCompletedSessionId(null);
     const sessionStart = Date.now();
     const startedAt = new Date(sessionStart).toISOString();
     const deviceId = getOrCreateDeviceId();
@@ -109,9 +112,30 @@ export function useShiftRecording() {
     await enqueueUpload(activeSessionId);
 
     recorderRef.current = null;
+    setCompletedSessionId(activeSessionId);
     resetRecordingState();
     void processQueue();
   }, [activeSessionId, resetRecordingState]);
+
+  const cancel = useCallback(async () => {
+    const recorder = recorderRef.current;
+    const sessionId = activeSessionId;
+    if (!recorder || !sessionId) return;
+    await recorder.stop();
+    recorderRef.current = null;
+    await discardSessionLocally(sessionId);
+    void deleteSessionRemote(sessionId).catch(() => {});
+    resetRecordingState();
+  }, [activeSessionId, resetRecordingState]);
+
+  const restart = useCallback(async () => {
+    if (!completedSessionId) return;
+    const sessionId = completedSessionId;
+    await discardSessionLocally(sessionId);
+    void deleteSessionRemote(sessionId).catch(() => {});
+    setCompletedSessionId(null);
+    await start();
+  }, [completedSessionId, start]);
 
   const markHousehold = useCallback(async () => {
     if (!activeSessionId || !sessionStartTimestamp) return;
@@ -132,6 +156,9 @@ export function useShiftRecording() {
     markerCount,
     start,
     stop,
+    cancel,
+    restart,
+    hasCompletedRecording: Boolean(completedSessionId),
     markHousehold,
   };
 }
