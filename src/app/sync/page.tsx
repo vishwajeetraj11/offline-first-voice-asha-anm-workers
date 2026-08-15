@@ -4,21 +4,23 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { CheckCircle2, CloudUpload, RefreshCw, ShieldAlert } from "lucide-react";
 import { db } from "@/lib/db/schema";
+import { useAuthStore } from "@/store/authStore";
 import { retryAllNow } from "@/lib/sync/engine";
 import { SyncQueueList } from "@/components/sync/SyncQueueList";
 import { AppHeader } from "@/components/ui/AppHeader";
 
 export default function SyncPage() {
   const [isRetryingAll, setIsRetryingAll] = useState(false);
+  const workerId = useAuthStore((state) => state.worker?.id);
   const counts = useLiveQuery(async () => {
-    const sessions = await db.sessions.toArray();
+    const sessions = workerId ? await db.sessions.where("workerId").equals(workerId).toArray() : [];
     return {
       total: sessions.length,
       failed: sessions.filter((session) => session.syncStatus === "failed").length,
       waiting: sessions.filter((session) => session.syncStatus === "pending" || session.syncStatus === "uploading").length,
       synced: sessions.filter((session) => session.syncStatus === "synced").length,
     };
-  }, []);
+  }, [workerId]);
   const failedCount = counts?.failed ?? 0;
 
   async function handleRetryAll() {

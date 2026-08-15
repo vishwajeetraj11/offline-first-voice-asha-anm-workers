@@ -13,6 +13,8 @@ import { getBackoffDelayMs } from "@/lib/constants";
 import { AuthExpiredError } from "@/lib/api/client";
 import { canReachAppServer } from "@/lib/connectivity/network";
 import type { UploadQueueJob } from "@/types/domain";
+import { useAuthStore } from "@/store/authStore";
+import { db } from "@/lib/db/schema";
 
 let isProcessing = false;
 
@@ -26,7 +28,9 @@ export async function processQueue(): Promise<void> {
   try {
     if (!(await canReachAppServer())) return;
 
-    const jobs = await getDueJobs();
+    const workerId = useAuthStore.getState().worker?.id;
+    if (!workerId) return;
+    const jobs = await getDueJobs(workerId);
     for (const job of jobs) {
       await processJob(job);
     }
@@ -66,6 +70,9 @@ async function processJob(job: UploadQueueJob): Promise<void> {
 
 // Bypasses backoff for a manual "Retry now" tap on a specific session.
 export async function retrySessionNow(sessionId: string): Promise<void> {
+  const workerId = useAuthStore.getState().worker?.id;
+  const localSession = await db.sessions.get(sessionId);
+  if (!workerId || !localSession || localSession.workerId !== workerId) return;
   const job = await getJobForSession(sessionId);
   if (job) await resetJobForRetry(job.id);
   await setSessionSyncStatus(sessionId, "pending");
@@ -74,7 +81,9 @@ export async function retrySessionNow(sessionId: string): Promise<void> {
 
 // Bypasses backoff for every currently-failed job at once ("Retry all").
 export async function retryAllNow(): Promise<void> {
-  const failedJobs = await getAllFailedJobs();
+  const workerId = useAuthStore.getState().worker?.id;
+  if (!workerId) return;
+  const failedJobs = await getAllFailedJobs(workerId);
   for (const job of failedJobs) {
     await resetJobForRetry(job.id);
     await setSessionSyncStatus(job.sessionId, "pending");

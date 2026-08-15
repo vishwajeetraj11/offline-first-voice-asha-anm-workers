@@ -50,7 +50,7 @@ export function useShiftRecording() {
   // queue rather than silently losing it.
   useEffect(() => {
     void (async () => {
-      const orphans = await findActiveOrphanSessions();
+      const orphans = await findActiveOrphanSessions(worker?.id);
       for (const orphan of orphans) {
         await markSessionInterrupted(orphan.id, orphan.totalDurationMs);
         await enqueueUpload(orphan.id);
@@ -60,8 +60,7 @@ export function useShiftRecording() {
       }
       if (orphans.length > 0) void processQueue();
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [showToast, worker?.id]);
 
   useEffect(() => {
     if (recordingState !== "recording") return;

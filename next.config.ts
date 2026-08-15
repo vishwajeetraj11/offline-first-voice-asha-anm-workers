@@ -10,6 +10,13 @@ const withPWA = withPWAInit({
     document: "/offline",
   },
   workboxOptions: {
+    // These are the two local-first entry points. Precaching them ensures a
+    // cold refresh in an installed PWA can still boot the client app shell;
+    // runtime caching alone only helps after a successful online visit.
+    additionalManifestEntries: [
+      { url: "/shift", revision: process.env.VERCEL_GIT_COMMIT_SHA || "dev" },
+      { url: "/sync", revision: process.env.VERCEL_GIT_COMMIT_SHA || "dev" },
+    ],
     // Uploads/API calls are retried by our own IndexedDB-backed sync queue
     // (src/lib/sync/engine.ts). Letting Workbox also intercept and retry
     // those requests would create two competing retry mechanisms, so we

@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import Link from "next/link";
 import { ArrowUpRight, Clock3, Inbox, Radio } from "lucide-react";
 import { db } from "@/lib/db/schema";
+import { useAuthStore } from "@/store/authStore";
 import { SyncStatusBadge } from "@/components/sync/SyncStatusBadge";
 import { RetryButton } from "@/components/sync/RetryButton";
 import { DeleteFailedButton } from "@/components/sync/DeleteFailedButton";
@@ -11,14 +12,17 @@ import { LocalRecordingPreview } from "@/components/sync/LocalRecordingPreview";
 import { formatDateTime, formatDuration, formatRelativeTime } from "@/lib/format";
 
 export function SyncQueueList() {
+  const workerId = useAuthStore((state) => state.worker?.id);
   const sessions = useLiveQuery(
-    () => db.sessions.orderBy("startedAt").reverse().toArray(),
-    []
+    () => workerId ? db.sessions.where("workerId").equals(workerId).toArray() : [],
+    [workerId]
   );
   const jobsBySessionId = useLiveQuery(async () => {
+    if (!workerId) return new Map();
     const jobs = await db.uploadQueue.toArray();
-    return new Map(jobs.map((job) => [job.sessionId, job]));
-  }, []);
+    const sessionIds = new Set((await db.sessions.where("workerId").equals(workerId).primaryKeys()).map(String));
+    return new Map(jobs.filter((job) => sessionIds.has(job.sessionId)).map((job) => [job.sessionId, job]));
+  }, [workerId]);
 
   if (!sessions) {
     return <div className="h-40 animate-pulse rounded-[1.75rem] bg-[#ebe8de]" aria-label="Loading saved records" />;

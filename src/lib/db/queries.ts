@@ -83,8 +83,15 @@ export async function setSessionSyncStatus(
   });
 }
 
-export async function findActiveOrphanSessions(): Promise<Session[]> {
-  return db.sessions.where("status").equals("active").toArray();
+export async function findActiveOrphanSessions(workerId?: string): Promise<Session[]> {
+  if (workerId) {
+    return db.sessions
+      .where("workerId")
+      .equals(workerId)
+      .filter((session) => session.status === "active")
+      .toArray();
+  }
+  return [];
 }
 
 // --- markers ------------------------------------------------------------
@@ -203,13 +210,17 @@ export async function enqueueUpload(sessionId: string): Promise<void> {
   await db.uploadQueue.add(job);
 }
 
-export async function getDueJobs(): Promise<UploadQueueJob[]> {
+export async function getDueJobs(workerId?: string): Promise<UploadQueueJob[]> {
   const now = nowIso();
   const jobs = await db.uploadQueue
     .where("status")
     .anyOf("pending", "failed")
     .sortBy("createdAt");
-  return jobs.filter((job) => !job.nextRetryAt || job.nextRetryAt <= now);
+  const dueJobs = jobs.filter((job) => !job.nextRetryAt || job.nextRetryAt <= now);
+  if (!workerId) return dueJobs;
+  const sessions = await db.sessions.where("workerId").equals(workerId).primaryKeys();
+  const sessionIds = new Set(sessions.map(String));
+  return dueJobs.filter((job) => sessionIds.has(job.sessionId));
 }
 
 export async function markJobInProgress(jobId: string): Promise<void> {
@@ -256,8 +267,12 @@ export async function getJobForSession(
   return db.uploadQueue.where("sessionId").equals(sessionId).first();
 }
 
-export async function getAllFailedJobs(): Promise<UploadQueueJob[]> {
-  return db.uploadQueue.where("status").equals("failed").toArray();
+export async function getAllFailedJobs(workerId?: string): Promise<UploadQueueJob[]> {
+  const jobs = await db.uploadQueue.where("status").equals("failed").toArray();
+  if (!workerId) return jobs;
+  const sessions = await db.sessions.where("workerId").equals(workerId).primaryKeys();
+  const sessionIds = new Set(sessions.map(String));
+  return jobs.filter((job) => sessionIds.has(job.sessionId));
 }
 
 export async function deleteFailedSession(sessionId: string): Promise<void> {
